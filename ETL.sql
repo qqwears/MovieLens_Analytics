@@ -98,16 +98,14 @@ SELECT DISTINCT
     u.user_id,
     u.gender,
     u.age,
-    CASE 
-        WHEN u.age < 16 THEN '0-15'
+    CASE WHEN u.age < 16 THEN '0-15'
         WHEN u.age BETWEEN 16 AND 19 THEN '16-19'
         WHEN u.age BETWEEN 20 AND 29 THEN '20-29'
         WHEN u.age BETWEEN 30 AND 39 THEN '30-39'
         WHEN u.age BETWEEN 40 AND 49 THEN '40-49'
         WHEN u.age BETWEEN 50 AND 59 THEN '50-59'
         WHEN u.age >= 60 THEN '60+'
-        ELSE 'Unknown'
-    END AS age_group,
+        ELSE 'Unknown' END AS age_group,
     o.occupation
 FROM staging.users_staging u
 JOIN staging.occupations_staging o ON u.occupation = o.occupation_id;
@@ -137,14 +135,45 @@ SELECT DISTINCT
     GENRE_WESTERN
 FROM staging.movies_staging;
 
-CREATE OR REPLACE TABLE public.FACT_RATINGS AS
+CREATE OR REPLACE TABLE PUBLIC.FACT_RATINGS AS
 SELECT 
-    r.user_id,
-    r.movie_id,   
-    r.rating,                   
-    r.rating_date
-FROM staging.RATINGS_STAGING r;
+    R.USER_ID,
+    R.MOVIE_ID,   
+    R.RATING,                   
+    R.RATING_DATE
+FROM STAGING.RATINGS_STAGING R;
 
+CREATE OR REPLACE TABLE PUBLIC.DIM_DATES AS
+SELECT DISTINCT
+    RATING_DATE AS DDATE,
+    DATE_PART(day, RATING_DATE) AS DAY,       
+    DATE_PART(dow, RATING_DATE) + 1 AS DAY_OF_WEEK,
+    DATE_PART(week, RATING_DATE) AS WEEK,
+    DATE_PART(month, RATING_DATE) AS MONTH,              
+    CASE DATE_PART(month, RATING_DATE)
+        WHEN 1 THEN 'JAN'
+        WHEN 2 THEN 'FEB'
+        WHEN 3 THEN 'MAR'
+        WHEN 4 THEN 'APR'
+        WHEN 5 THEN 'MAY'
+        WHEN 6 THEN 'JUN'
+        WHEN 7 THEN 'JUL'
+        WHEN 8 THEN 'AUG'
+        WHEN 9 THEN 'SEP'
+        WHEN 10 THEN 'OCT'
+        WHEN 11 THEN 'NOV'
+        WHEN 12 THEN 'DEC'
+    END AS MONTH_NAME,
+    DATE_PART(quarter, RATING_DATE) AS QUARTER,
+    DATE_PART(year, RATING_DATE) AS YEAR
+FROM STAGING.RATINGS_STAGING
+GROUP BY RATING_DATE, 
+    DATE_PART(day, RATING_DATE), 
+    DATE_PART(dow, RATING_DATE), 
+    DATE_PART(month, RATING_DATE), 
+    DATE_PART(year, RATING_DATE), 
+    DATE_PART(week, RATING_DATE), 
+    DATE_PART(quarter, RATING_DATE);
 
 CREATE OR REPLACE VIEW PUBLIC.RATINGS_BY_GENRE_VIEW AS
 SELECT 
