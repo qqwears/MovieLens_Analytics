@@ -3,4 +3,10 @@ Tento repozitár obsahuje realizáciu ETL procesu pre analýzu dát z datasetu M
 ## 1. Úvod a popis zdrojových dát
 Hlavným cieľom tohto semestrálneho projektu je preskúmať dáta súvisiace s filmami, používateľmi a ich hodnoteniami. Analýza pomáha odhaliť trendy v diváckych preferenciách, najobľúbenejšie filmy a vzorce správania používateľov. Odkaz na DB nájdete [tu](https://grouplens.org/datasets/movielens/).
 ### Zdrojove data:
-33333
+- movies
+- occupations
+- ratings
+- users
+### 1.1 Dátová architektúra
+#### ERD diagram MovieLens:
+![*Obrázok 1 Entitno-relačná schéma MovieLens*](ERD_Diagram.png)
