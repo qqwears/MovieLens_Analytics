@@ -140,7 +140,8 @@ GROUP BY RATING_DATE,
     DATE_PART(week, RATING_DATE), 
     DATE_PART(quarter, RATING_DATE);
 ```
-Ďalej vytvoríme žánrový rebríček(?):
+Ďalej na analýzu hodnotenia podľa žánrov vytvoríme Pohľad, ktorý bude založený na faktoch hodnotenia a merania filmov. Problémom bola existujúca štruktúra pôvodných údajov, kde boli žánre uvedené ako stĺpce v tabuľke filmov. Aby sme teda mohli agregovať hodnotenia podľa žánrov, museli sme stĺpce žánrov rozšíriť na stĺpce, t. j. použiť operáciu (unpivot)
+V našom prípade je vhodné urobiť to ako VIEW, aby sa zabránilo duplicite údajov.
 ```sql
 CREATE OR REPLACE VIEW PUBLIC.RATINGS_BY_GENRE_VIEW AS
 SELECT 
@@ -177,3 +178,62 @@ DROP TABLE IF EXISTS staging.users_staging;
 DROP TABLE IF EXISTS staging.occupations_staging;
 ```
 ## 4 Vizualizácia dát
+Dashboard zahŕňa 6 rôznych vizualizácií, ktoré predstavujú prehľad hlavných ukazovateľov a trendov spojených s filmami, používateľmi a ich hodnoteniami. Tieto vizualizácie pomáhajú odpovedať na zásadné otázky a lepšie analyzovať správanie divákov spolu s ich preferenciami.
+![Charts](Charts.png)
+### Graf 1 & 2: Najčastejšie hodnotené žánre (Top 5 žánrov)
+Vizualizácia piatich najobľúbenejších filmov je prezentovaná prostredníctvom dvoch grafov, ktoré jasne ukazujú, že dráma je najpopulárnejším žánrom. Tento poznatok môže byť užitočný pri tvorbe reklamných kampaní a odporúčaní filmov.
+```sql
+SELECT 
+    GENRE_NAME, 
+    CNT_RATING 
+FROM PUBLIC.RATINGS_BY_GENRE_VIEW
+ORDER BY CNT_RATING DESC
+LIMIT 5;
+```
+### Graf 3: Najobľúbenejšie filmy (10 najlepších filmov podľa žánru)
+Grafická vizualizácia predstavuje 10 najobľúbenejších filmov. Tieto informácie môžu byť užitočné pri výbere kvalitných filmov alebo ako podklad pre marketingové spoločnosti.
+```sql
+SELECT DM.TITLE AS MOVIE,
+    COUNT(FR.RATING) AS RATINGS_COUNT,
+    AVG(FR.RATING) AS AVERAGE_RATING
+FROM FACT_RATINGS FR
+JOIN DIM_MOVIES DM ON FR.MOVIE_ID = DM.ID
+GROUP BY DM.TITLE
+ORDER BY RATINGs_count DESC
+LIMIT 10;
+```
+### Graf 4: Kto častejšie hodnotí filmy, mužské alebo ženské pohlavie
+Grafické znázornenie štatistík ukazuje, ktoré pohlavie (muži alebo ženy) hodnotí filmy častejšie. Tento prehľad môže pomôcť presnejšie určiť cieľovú skupinu filmu a získať lepšiu analýzu filmového obsahu.
+```sql
+SELECT DU.GENDER, COUNT(DU.GENDER)
+FROM FACT_RATINGS FR
+JOIN DIM_USERS DU ON FR.USER_ID = DU.USER_ID
+JOIN DIM_MOVIES DM ON FR.MOVIE_ID = DM.ID
+GROUP BY DU.GENDER
+```
+### Graf 5: Štatistiky o známkach ľudí pre ich povolanie
+Grafické zobrazenie štatistík hodnotení podľa povolania ľudí poskytuje prehľad o tom, ktoré profesijné skupiny prejavujú najväčší záujem o filmy. Táto analýza napomáha presnejšie určiť cieľové publikum.
+```sql
+SELECT 
+    DU.Occupation AS Occupation, 
+    COUNT(FR.RATING) AS CNT_RATING 
+FROM FACT_RATINGS FR
+JOIN DIM_USERS DU ON FR.USER_ID = DU.USER_ID
+GROUP BY DU.Occupation
+ORDER BY CNT_RATING DESC
+LIMIT 5;
+```
+### Graf 6: Najsledovanejší mesiac (podľa počtu hodnotení)
+Graf zobrazuje počet hodnotení filmov počas jednotlivých mesiacov v roku. Tento prehľad umožňuje lepšie identifikovať sezónne trendy, porozumieť preferenciám publika a poskytuje cenné informácie pre reklamné agentúry.
+```sql
+SELECT d.MONTH_NAME AS MONTH_NAME, COUNT(f.RATING) AS CNT_RATINGS
+FROM FACT_RATINGS f
+JOIN DIM_DATES d ON f.RATING_DATE = d.DDATE
+GROUP BY d.MONTH_NAME
+ORDER BY CNT_RATINGS DESC;
+```
+
+Dashboard poskytuje detailný prehľad o údajoch a odpovedá na hlavné otázky súvisiace s preferenciami divákov a správaním používateľov. Vizualizácie zjednodušujú analýzu dát a môžu byť využité na vylepšenie odporúčacích algoritmov, marketingových kampaní a služieb spojených s filmami.
+
+---
+**Autor:** Viktor Kyrianov
